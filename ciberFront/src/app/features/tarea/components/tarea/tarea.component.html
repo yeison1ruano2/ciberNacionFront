@@ -1,0 +1,192 @@
+<div class="dashboard">
+  <header class="header">
+    <div>
+      <h1>Tareas</h1>
+      <p>Gestión de tareas</p>
+    </div>
+    <button class="btn-primary" (click)="crearTarea()">
+      + Crear tarea
+    </button>
+  </header>
+  <section class="filters-container card">
+    <form [formGroup]="formFiltros" (ngSubmit)="filtrarTareas()" class="filters-grid">
+      <!--<div class="filter-group">
+        <label>Buscar</label>
+        <input type="text" formControlName="termino" placeholder="Buscar">
+      </div>-->
+
+      <div class="filter-group">
+        <label>Prioridad</label>
+        <select formControlName="prioridad">
+          <option value="BAJA">BAJA</option>
+          <option value="MEDIA">MEDIA</option>
+          <option value="ALTA">ALTA</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label>Fecha Limite</label>
+        <input type="date" formControlName="fechaLimite" />
+      </div>
+
+      <div class="filter-group">
+        <label>Estado</label>
+        <select formControlName="estado">
+          <option value="PENDIENTE">PENDIENTE</option>
+          <option value="EN_PROGRESO">EN PROGRESO</option>
+          <option value="COMPLETADA">COMPLETADA</option>
+          <option value="CANCELADA">CANCELADA</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Activo</label>
+        <select formControlName="activo">
+          <option value="true">Activo</option>
+          <option value="false">Desactivo</option>
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn-text" (click)="limpiarFiltros()">Limpiar</button>
+        <button type="submit" class="btn-primary">
+          Filtrar
+        </button>
+      </div>
+    </form>
+  </section>
+  <div class="modal-state" [class.show]="modalStatus">
+    <div class="modal-state-content">
+      <div class="modal-state-header">
+        <h2>Cambiar Estado</h2>
+        <button class="close-btn" (click)="cerrarModalStatus()">×</button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="formState" (ngSubmit)="guardarEstado()">
+          <div class="form-group">
+            <label>Estado</label>
+            <select formControlName="estado">
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="EN_PROGRESO">EN PROGRESO</option>
+              <option value="COMPLETADA">COMPLETADA</option>
+              <option value="CANCELADA">CANCELADA</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="cerrarModalStatus()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="formState.invalid">
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop" [class.show]="modalOpen">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Crear Nueva Tarea</h2>
+        <button class="close-btn" (click)="cerrarModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <form [formGroup]="formTarea" (ngSubmit)="guardarTarea()">
+          <div class="form-group">
+            <label>Título</label>
+            <input formControlName="titulo" placeholder="Título" />
+          </div>
+
+          <div class="form-group">
+            <label>Descripción</label>
+            <textarea formControlName="descripcion" placeholder="Descripción"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Fecha límite</label>
+            <input type="date" formControlName="fechaLimite" />
+          </div>
+          <div class="form-group">
+            <label>Prioridad</label>
+            <select formControlName="prioridad">
+              <option value="BAJA">BAJA</option>
+              <option value="MEDIA">MEDIA</option>
+              <option value="ALTA">ALTA</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Estado</label>
+            <select formControlName="estado">
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="EN_PROGRESO">EN PROGRESO</option>
+              <option value="COMPLETADA">COMPLETADA</option>
+            </select>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn-secondary" (click)="cerrarModal()">Cancelar</button>
+            <button type="submit" class="btn-primary" [disabled]="formTarea.invalid">
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <section class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Descripción</th>
+          <th>Fecha límite</th>
+          <th>Prioridad</th>
+          <th>Estado</th>
+          <th class="actions-col">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="loading">
+          <td colspan="5" class="empty">Cargando tareas...</td>
+        </tr>
+        <tr *ngIf="!loading && tareas.length === 0">
+          <td colspan="5" class="empty">No hay tareas registradas</td>
+        </tr>
+        <tr *ngFor="let tarea of tareas">
+          <td>{{ tarea.titulo }}</td>
+          <td>{{ tarea.descripcion }}</td>
+          <td>{{ tarea.fechaLimite | date: 'dd/MM/yyyy'}}</td>
+          <td>
+            <span class="badge" [ngClass]="tarea.prioridad.toLowerCase()">
+              {{tarea.prioridad}}
+            </span>
+          </td>
+          <td>
+            <span class="badge" [ngClass]="tarea.estado.toLowerCase()">
+              {{ tarea.estado }}
+            </span>
+          </td>
+
+          <td class="actions">
+            <button class="icon-btn status" title="Cambiar estado" (click)="cambiarEstado(tarea.id)">
+              🔄
+            </button>
+            <button class="icon-btn edit" title="Editar" (click)="editarTarea(tarea.id)">
+              ✏️
+            </button>
+            <button class="icon-btn delete" title="Eliminar" (click)="eliminarTarea(tarea.id)">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="pagination" *ngIf="totalPages>=1">
+      <button [disabled]="page === 0" (click)="cambiarPagina(-1)">◀</button>
+      <span>Página {{page + 1}} de {{totalPages}}</span>
+      <button [disabled]="page === totalPages -1" (click)="cambiarPagina(1)">
+        ▶
+      </button>
+    </div>
+  </section>
+</div>

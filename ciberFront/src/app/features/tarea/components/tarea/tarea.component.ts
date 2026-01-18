@@ -8,12 +8,13 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 
 interface Tarea {
   id: number;
   titulo: string;
   descripcion: string;
-  estado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA';
+  estado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA';
   prioridad: 'BAJA' | 'MEDIA' | 'ALTA';
   fechaLimite: string;
   activo: boolean;
@@ -27,12 +28,15 @@ interface Tarea {
   styleUrl: './tarea.component.css',
 })
 export class TareaComponent implements OnInit {
+  private route = inject(ActivatedRoute);
   private tareaService = inject(TareaService);
+  private router = inject(Router);
   private fb = inject(FormBuilder);
   tareas: Tarea[] = [];
   formTarea!: FormGroup;
   formFiltros!: FormGroup;
   formState!: FormGroup;
+  proyectoId!: number;
 
   page = 0;
   size = 5;
@@ -46,7 +50,20 @@ export class TareaComponent implements OnInit {
     this.inicializarFormulario();
     this.inicializarFormularioFiltros();
     this.inicializarFormularioStates();
-    this.filtrarTareas();
+    this.proyectoId = Number(this.route.snapshot.paramMap.get('id'));
+    if (this.proyectoId) {
+      const filtros = this.formFiltros.value;
+      this.tareaService
+        .filtrarTareas(this.proyectoId, filtros, this.page, this.size)
+        .subscribe({
+          next: (response) => {
+            this.tareas = response.content;
+            this.totalPages = response.totalPages;
+            this.page = response.number;
+            this.loading = false;
+          },
+        });
+    }
   }
 
   inicializarFormulario() {
@@ -73,6 +90,10 @@ export class TareaComponent implements OnInit {
       estado: [''],
       id: [null],
     });
+  }
+
+  volver() {
+    this.router.navigate(['/dashboard']);
   }
 
   guardarEstado() {
@@ -105,18 +126,31 @@ export class TareaComponent implements OnInit {
   filtrarTareas() {
     this.loading = true;
     const filtros = this.formFiltros.value;
-    this.tareaService.filtrarTareas(filtros, this.page, this.size).subscribe({
-      next: (response) => {
-        this.tareas = response.content;
-        this.totalPages = response.totalPages;
-        this.page = response.number;
-        this.loading = false;
-      },
-      error: (error) => {
-        console.warn('Error al filtrar tareas:', error);
-        Swal.fire('Error', 'No se pudieron cargar las tareas.', 'error');
-        this.loading = false;
-      },
+    this.tareaService
+      .filtrarTareas(this.proyectoId, filtros, this.page, this.size)
+      .subscribe({
+        next: (response) => {
+          this.tareas = response.content;
+          this.totalPages = response.totalPages;
+          this.page = response.number;
+          this.loading = false;
+        },
+        error: (error) => {
+          console.warn('Error al filtrar tareas:', error);
+          Swal.fire('Error', 'No se pudieron cargar las tareas.', 'error');
+          this.loading = false;
+        },
+      });
+  }
+
+  cerrarModal() {
+    this.modalOpen = false;
+    this.formTarea.patchValue({
+      titulo: '',
+      descripcion: '',
+      fechaLimite: '',
+      prioridad: '',
+      estado: '',
     });
   }
 
@@ -133,7 +167,7 @@ export class TareaComponent implements OnInit {
   guardarTarea() {
     if (this.formTarea.invalid) return;
     const tarea = this.formTarea.value;
-    this.tareaService.crearTarea(tarea).subscribe({
+    this.tareaService.crearTarea(tarea, this.proyectoId).subscribe({
       next: (response) => {
         console.log('Tarea creada con éxito:', response);
         Swal.fire({
@@ -155,12 +189,12 @@ export class TareaComponent implements OnInit {
     });
   }
 
-  cerrarModal() {
-    this.modalOpen = false;
-  }
-
   cerrarModalStatus() {
     this.modalStatus = false;
+    this.formState.patchValue({
+      estado: '',
+      id: null,
+    });
   }
 
   cambiarPagina(delta: number) {

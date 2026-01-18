@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { Observable } from 'rxjs';
+import { NumberSymbol } from '@angular/common';
 
 @Injectable({
   providedIn: 'root',
@@ -22,14 +23,15 @@ export class TareaService {
     return this.http.get<any>(`${this.baseUrl}`, { params });
   }
 
-  crearTarea(tarea: any): Observable<any> {
-    return this.http.post<any>(this.baseUrl, tarea);
+  crearTarea(tarea: any, proyectoId: number): Observable<any> {
+    return this.http.post<any>(`${this.baseUrl}/${proyectoId}`, tarea);
   }
 
   eliminarTarea(id: number): Observable<any> {
     return this.http.delete<any>(`${this.baseUrl}/${id}`);
   }
   filtrarTareas(
+    proyectoId: number,
     filtros: any,
     page: number = 0,
     size: number = 5,
@@ -50,7 +52,7 @@ export class TareaService {
     if (filtros.activo) {
       params = params.set('activo', filtros.activo);
     }
-    return this.http.get(`${this.baseUrl}/filtrar`, { params });
+    return this.http.get(`${this.baseUrl}/filtrar/${proyectoId}`, { params });
   }
 
   obtenerTareasPorMes(

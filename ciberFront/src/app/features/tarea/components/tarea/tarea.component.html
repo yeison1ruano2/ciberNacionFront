@@ -4,16 +4,17 @@
       <h1>Tareas</h1>
       <p>Gestión de tareas</p>
     </div>
-    <button class="btn-primary" (click)="crearTarea()">
-      + Crear tarea
-    </button>
+    <div class="header-actions">
+      <button class="btn-secondary" (click)="volver()">
+        ← Volver
+      </button>
+      <button class="btn-primary" (click)="crearTarea()">
+        + Crear tarea
+      </button>
+    </div>
   </header>
   <section class="filters-container card">
     <form [formGroup]="formFiltros" (ngSubmit)="filtrarTareas()" class="filters-grid">
-      <!--<div class="filter-group">
-        <label>Buscar</label>
-        <input type="text" formControlName="termino" placeholder="Buscar">
-      </div>-->
 
       <div class="filter-group">
         <label>Prioridad</label>
@@ -119,6 +120,7 @@
               <option value="PENDIENTE">PENDIENTE</option>
               <option value="EN_PROGRESO">EN PROGRESO</option>
               <option value="COMPLETADA">COMPLETADA</option>
+              <option value="CANCELADA">CANCELADA</option>
             </select>
           </div>
 
@@ -168,10 +170,12 @@
           </td>
 
           <td class="actions">
-            <button class="icon-btn status" title="Cambiar estado" (click)="cambiarEstado(tarea.id)">
+            <button *ngIf="tarea.estado !== 'CANCELADA'" class="icon-btn status" title="Cambiar estado"
+              (click)="cambiarEstado(tarea.id)">
               🔄
             </button>
-            <button class="icon-btn edit" title="Editar" (click)="editarTarea(tarea.id)">
+            <button *ngIf="tarea.estado !== 'CANCELADA'" class="icon-btn edit" title="Editar"
+              (click)="editarTarea(tarea.id)">
               ✏️
             </button>
             <button class="icon-btn delete" title="Eliminar" (click)="eliminarTarea(tarea.id)">
